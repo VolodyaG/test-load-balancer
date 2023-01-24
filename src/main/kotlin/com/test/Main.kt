@@ -10,12 +10,10 @@ import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) = runBlocking {
-    val providersRegistry = RoundRobbinProvidersRegistry().apply {
+    val lb = LoadBalancer(RoundRobbinProvidersRegistry()).apply {
         repeat(10) { addProvider(SimpleProvider("$it")) }
     }
     delay(3.seconds) // Wait for healthcheck
-
-    val lb = LoadBalancer(providersRegistry = providersRegistry)
 
     withContext(Dispatchers.Default) {
         val requests = 125 // Add delay(100) in SimpleProvider.get() to simulate IO time

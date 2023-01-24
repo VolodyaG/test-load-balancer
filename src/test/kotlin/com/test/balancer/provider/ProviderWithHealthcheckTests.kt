@@ -1,7 +1,6 @@
-package com.test.balancer.health
+package com.test.balancer.provider
 
 import com.test.balancer.Config
-import com.test.balancer.provider.SimpleProvider
 import com.test.balancer.waiUntilCheckIsCalled
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -23,11 +22,11 @@ class ProviderWithHealthcheckTests : AnnotationSpec() {
     }
 
     @Test
-    fun `Should initialize provider as unhealthy until while it is not checked`() {
+    suspend fun `Should initialize provider as unhealthy until it is not checked`() {
         val provider = SimpleProvider("1")
         val providerWithHealthcheck = ProviderWithHealthcheck(provider)
 
-        providerWithHealthcheck.isHealthy.shouldBeFalse()
+        providerWithHealthcheck.isAvailable().shouldBeFalse()
     }
 
     @Test
@@ -37,7 +36,7 @@ class ProviderWithHealthcheckTests : AnnotationSpec() {
 
         provider.waiUntilCheckIsCalled(times = 2)
 
-        providerWithHealthcheck.isHealthy.shouldBeTrue()
+        providerWithHealthcheck.isAvailable().shouldBeTrue()
     }
 
     @Test
@@ -49,7 +48,7 @@ class ProviderWithHealthcheckTests : AnnotationSpec() {
 
         provider.waiUntilCheckIsCalled(times = 1)
 
-        providerWithHealthcheck.isHealthy.shouldBeFalse()
+        providerWithHealthcheck.isAvailable().shouldBeFalse()
     }
 
     @Test
@@ -60,12 +59,12 @@ class ProviderWithHealthcheckTests : AnnotationSpec() {
         val providerWithHealthcheck = ProviderWithHealthcheck(provider)
 
         provider.waiUntilCheckIsCalled(times = 1)
-        providerWithHealthcheck.isHealthy.shouldBeFalse()
+        providerWithHealthcheck.isAvailable().shouldBeFalse()
 
         coEvery { provider.check() }.returns(true)
         provider.waiUntilCheckIsCalled(times = 2)
 
-        providerWithHealthcheck.isHealthy.shouldBeFalse()
+        providerWithHealthcheck.isAvailable().shouldBeFalse()
     }
 
     @Test
@@ -77,11 +76,11 @@ class ProviderWithHealthcheckTests : AnnotationSpec() {
         val providerWithHealthcheck = ProviderWithHealthcheck(provider)
         provider.waiUntilCheckIsCalled(times = 1)
 
-        providerWithHealthcheck.isHealthy.shouldBeFalse()
+        providerWithHealthcheck.isAvailable().shouldBeFalse()
 
         coEvery { provider.check() }.returns(true)
         provider.waiUntilCheckIsCalled(times = 3)
 
-        providerWithHealthcheck.isHealthy.shouldBeTrue()
+        providerWithHealthcheck.isAvailable().shouldBeTrue()
     }
 }

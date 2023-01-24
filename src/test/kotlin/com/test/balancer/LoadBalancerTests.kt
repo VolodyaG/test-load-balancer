@@ -33,13 +33,12 @@ class LoadBalancerTests : AnnotationSpec() {
             coEvery { it.check() }.returns(false)
         }
 
-        val providerRegistry = RoundRobbinProvidersRegistry().apply {
+        val loadBalancer = LoadBalancer(RoundRobbinProvidersRegistry()).apply {
             addProvider(deadProvider)
             addProvider(SimpleProvider("2"))
         }
         deadProvider.waiUntilCheckIsCalled(times = 2)
 
-        val loadBalancer = LoadBalancer(providerRegistry)
         val response = loadBalancer.get()
 
         response.shouldBe("2")
@@ -50,12 +49,10 @@ class LoadBalancerTests : AnnotationSpec() {
         val provider = spyk(SimpleProvider("1"))
         coEvery { provider.get() }.coAnswers { delay(500); provider.id }
 
-        val providerRegistry = RandomProvidersRegistry().apply {
+        val loadBalancer = LoadBalancer(RandomProvidersRegistry()).apply {
             addProvider(provider)
         }
         provider.waiUntilCheckIsCalled(times = 2)
-
-        val loadBalancer = LoadBalancer(providerRegistry)
 
         val response = withTimeout(1.seconds) {
             (0 until 7).map {
@@ -72,12 +69,10 @@ class LoadBalancerTests : AnnotationSpec() {
         val provider = spyk(SimpleProvider("1"))
         coEvery { provider.get() }.coAnswers { delay(500); provider.id }
 
-        val providerRegistry = RandomProvidersRegistry().apply {
+        val loadBalancer = LoadBalancer(RandomProvidersRegistry()).apply {
             addProvider(provider)
         }
         provider.waiUntilCheckIsCalled(times = 2)
-
-        val loadBalancer = LoadBalancer(providerRegistry)
 
         val error = shouldThrow<IllegalStateException> {
             withTimeout(1.seconds) {
@@ -106,12 +101,10 @@ class LoadBalancerTests : AnnotationSpec() {
             coEvery { it.check() }.returns(false)
         }
 
-        val providerRegistry = RandomProvidersRegistry().apply {
+        val loadBalancer = LoadBalancer(RandomProvidersRegistry()).apply {
             addProvider(deadProvider)
         }
         deadProvider.waiUntilCheckIsCalled(times = 2)
-
-        val loadBalancer = LoadBalancer(providersRegistry = providerRegistry)
 
         val error = shouldThrow<IllegalStateException> {
             loadBalancer.get()

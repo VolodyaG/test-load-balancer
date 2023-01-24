@@ -1,16 +1,17 @@
-package com.test.balancer.health
+package com.test.balancer.provider
 
 import com.test.balancer.Config
-import com.test.balancer.provider.Provider
 import kotlinx.coroutines.*
 
 class ProviderWithHealthcheck(private val instance: Provider) : Provider by instance {
-    var isHealthy: Boolean = false
-        private set
-
+    private var isHealthy: Boolean = false
     private var lastCheckResult: Boolean = false
 
-    private val checkScheduler = CoroutineScope(Dispatchers.Default).launch {
+    override suspend fun isAvailable(): Boolean {
+        return instance.isAvailable() && isHealthy
+    }
+
+    private val checkScheduler = CoroutineScope(Dispatchers.IO).launch {
         while (isActive) {
             doHealthCheck()
             delay(Config.HEALTHCHECK_PERIOD)

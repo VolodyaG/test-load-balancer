@@ -1,17 +1,16 @@
 package com.test.balancer.registry
 
-import com.test.balancer.health.ProviderWithHealthcheck
 import com.test.balancer.provider.Provider
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 abstract class ProvidersRegistry {
-    private val providers = mutableListOf<ProviderWithHealthcheck>()
+    private val providers = mutableListOf<Provider>()
     private val mutex = Mutex()
 
     suspend fun nextAvailableProvider(): Provider? {
         return mutex.withLock {
-            val healthyProviders = providers.filter { it.isHealthy }
+            val healthyProviders = providers.filter { it.isAvailable() }
             if (healthyProviders.isEmpty()) null else healthyProviders.pickNext()
         }
     }
@@ -19,7 +18,7 @@ abstract class ProvidersRegistry {
     suspend fun addProvider(provider: Provider) {
         mutex.withLock {
             check(providers.size < 10) { "Maximum number of providers has been reached" }
-            providers.add(ProviderWithHealthcheck(provider))
+            providers.add(provider)
         }
     }
 
@@ -31,7 +30,7 @@ abstract class ProvidersRegistry {
 
     suspend fun countAvailableProviders(): Int {
         return mutex.withLock {
-            providers.count { it.isHealthy }
+            providers.count { it.isAvailable() }
         }
     }
 
